@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Sputnik Eco</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+
+<body>
+    <div class="main">
+        <div class="page-header">
+            <div>
+                <h1>Reports <span id="reportCount"
+                        style="color: var(--muted); font-size: 16px; font-weight: normal; margin-left: 8px;">(0)</span>
+                </h1>
+                <p style="color: var(--muted);">Generated PDFs from your analyses</p>
+            </div>
+        </div>
+
+        <div id="reportsGrid" class="grid grid-3">
+        </div>
+
+        <div id="emptyState" style="display: none; text-align: center; padding: 80px 24px;">
+            <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+            <h2 style="margin-bottom: 8px;">No reports yet</h2>
+            <p style="color: var(--muted); margin-bottom: 24px;">Run an analysis on the map to generate your first
+                report.</p>
+            <a href="/app/map.html" class="btn btn-primary">Go to Map</a>
+        </div>
+    </div>
+
+    <script src="/app/js/api.js"></script>
+    <script src="/app/js/reports.js"></script>
+</body>
+
+</html>

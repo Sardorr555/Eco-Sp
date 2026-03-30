@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sputnik Eco - Monitor Any Territory From Space</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        .landing-nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 24px 48px; border-bottom: 1px solid var(--border);
+        }
+        .landing-nav .logo { font-size: 20px; font-weight: 600; color: var(--accent); text-decoration: none; }
+        .hero {
+            padding: 120px 48px; text-align: center;
+            background: radial-gradient(circle at top, var(--surface-2), var(--bg));
+        }
+        .hero h1 { font-size: 56px; margin-bottom: 24px; font-weight: 600; line-height: 1.2; }
+        .hero p { font-size: 20px; color: var(--muted); margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto; }
+        .hero .ctas { display: flex; gap: 16px; justify-content: center; }
+        
+        .section-title { text-align: center; font-size: 32px; margin-bottom: 64px; }
+        .how-it-works { padding: 80px 48px; background: var(--surface); }
+        .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; max-width: 1000px; margin: 0 auto; text-align: center; }
+        .step-icon { width: 64px; height: 64px; background: var(--surface-2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; color: var(--accent); }
+        .step h3 { font-size: 20px; margin-bottom: 12px; }
+        .step p { color: var(--muted); }
+
+        .metrics { padding: 80px 48px; display: flex; justify-content: center; gap: 64px; text-align: center; }
+        .metric-big { font-size: 48px; font-weight: 600; color: var(--accent); margin-bottom: 8px; }
+
+        .pricing { padding: 80px 48px; background: var(--surface); }
+        .pricing-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; max-width: 1000px; margin: 0 auto; }
+        .pricing-card { background: var(--bg); padding: 40px; border: 1px solid var(--border); border-radius: var(--radius); text-align: center; }
+        .pricing-card.pro { border-color: var(--accent); position: relative; }
+        .pricing-card.pro::before { content: "Most Popular"; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: var(--bg); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .price { font-size: 40px; font-weight: 600; margin: 24px 0; }
+        .features { list-style: none; margin-bottom: 32px; text-align: left; }
+        .features li { margin-bottom: 12px; display: flex; gap: 8px; color: var(--muted); }
+        .features li::before { content: "✓"; color: var(--accent); }
+
+        .footer { padding: 48px; border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 14px; }
+    </style>
+</head>
+<body>
+    <nav class="landing-nav">
+        <a href="/" class="logo">Sputnik Eco</a>
+        <div style="display: flex; gap: 16px;">
+            <a href="/app/login.html" class="btn btn-ghost">Login</a>
+            <a href="/app/register.html" class="btn btn-primary">Get Started</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <h1>Monitor Any Territory From Space</h1>
+        <p>Real air quality data for any location on Earth. Powered by satellite data.</p>
+        <div class="ctas">
+            <a href="/app/register.html" class="btn btn-primary">Start Free</a>
+            <a href="#how" class="btn btn-ghost">See How It Works</a>
+        </div>
+    </header>
+
+    <section id="how" class="how-it-works">
+        <h2 class="section-title">How It Works</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-icon">1</div>
+                <h3>Draw Territory</h3>
+                <p>Use our interactive map to draw a custom polygon around any area of interest.</p>
+            </div>
+            <div class="step">
+                <div class="step-icon">2</div>
+                <h3>Fetch Data</h3>
+                <p>We retrieve real-time satellite data for PM2.5, NO₂, CO, and other key pollutants.</p>
+            </div>
+            <div class="step">
+                <div class="step-icon">3</div>
+                <h3>Get Reports</h3>
+                <p>Instantly generate professional PDF reports with WHO guideline comparisons.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="metrics">
+        <div>
+            <div class="metric-big">6</div>
+            <div class="metric-label">Pollutants Tracked</div>
+        </div>
+        <div>
+            <div class="metric-big">Real-time</div>
+            <div class="metric-label">Data Updates</div>
+        </div>
+        <div>
+            <div class="metric-big">Any</div>
+            <div class="metric-label">Territory on Earth</div>
+        </div>
+    </section>
+
+    <section class="pricing">
+        <h2 class="section-title">Simple Pricing</h2>
+        <div class="pricing-cards">
+            <div class="pricing-card">
+                <h3>Free</h3>
+                <div class="price">$0<span style="font-size:16px;color:var(--muted)">/mo</span></div>
+                <ul class="features">
+                    <li>1 Territory</li>
+                    <li>3 Analyses per month</li>
+                    <li>Basic dashboard</li>
+                </ul>
+            </div>
+            <div class="pricing-card pro">
+                <h3>Pro</h3>
+                <div class="price">$49<span style="font-size:16px;color:var(--muted)">/mo</span></div>
+                <ul class="features">
+                    <li>10 Territories</li>
+                    <li>Unlimited analyses</li>
+                    <li>PDF Reports</li>
+                </ul>
+            </div>
+            <div class="pricing-card">
+                <h3>Enterprise</h3>
+                <div class="price">Custom</div>
+                <ul class="features">
+                    <li>Unlimited Territories</li>
+                    <li>API Access</li>
+                    <li>Whitelabel Reports</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        © 2026 Sputnik Eco. Powered by Open-Meteo Air Quality API.
+    </footer>
+</body>
+</html>

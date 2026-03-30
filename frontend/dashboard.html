@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sputnik Eco</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="main">
+        <div class="page-header">
+            <div>
+                <h1 id="greeting">Good morning</h1>
+                <p style="color: var(--muted);" id="currentDate">Loading date...</p>
+            </div>
+            <a href="/app/map.html" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                New Analysis
+            </a>
+        </div>
+
+        <div class="grid grid-4" style="margin-bottom: 32px;">
+            <div class="card metric">
+                <div class="metric-label">Territories Monitored</div>
+                <div class="metric-value" id="statTerritories">-</div>
+            </div>
+            <div class="card metric">
+                <div class="metric-label">Average Score</div>
+                <div class="metric-value" id="statAvgScore">-</div>
+            </div>
+            <div class="card metric">
+                <div class="metric-label">Best Territory</div>
+                <div class="metric-value" id="statBest" style="font-size: 20px; line-height: 1.4; margin-top: 8px;">-
+                </div>
+            </div>
+            <div class="card metric">
+                <div class="metric-label">Worst Territory</div>
+                <div class="metric-value" id="statWorst" style="font-size: 20px; line-height: 1.4; margin-top: 8px;">-
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 32px; padding: 24px; height: 350px;">
+            <h3 style="margin-bottom: 16px; font-size: 16px;">Score Trends</h3>
+            <canvas id="trendChart"></canvas>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 16px; font-size: 16px;">Recent Analyses</h3>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Territory (ID)</th>
+                            <th>Period</th>
+                            <th>Score</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentAnalysesBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="/app/js/api.js"></script>
+    <script src="/app/js/dashboard.js"></script>
+</body>
+
+</html>

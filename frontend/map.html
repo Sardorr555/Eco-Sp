@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map & Analysis - Sputnik Eco</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <style>
+        body {
+            overflow: hidden;
+        }
+
+        .map-layout {
+            display: flex;
+            height: 100vh;
+            margin-left: 240px;
+        }
+
+        .map-sidebar {
+            width: 380px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            overflow-y: auto;
+        }
+
+        #map {
+            flex: 1;
+            height: 100%;
+            background: #080d1a;
+            z-index: 1;
+        }
+
+        .panel-section {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            color: var(--muted);
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .territory-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .territory-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .territory-item:hover,
+        .territory-item.active {
+            border-color: var(--accent);
+        }
+
+        .territory-item .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 12px;
+        }
+
+        .territory-item .name {
+            font-weight: 500;
+            font-size: 14px;
+            flex: 1;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .territory-item .score {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(8, 13, 26, 0.8);
+            z-index: 999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal {
+            background: var(--surface);
+            padding: 32px;
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid var(--border);
+        }
+
+        .empty-state {
+            padding: 32px 0;
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="map-layout">
+        <div class="map-sidebar">
+            <div class="panel-section">
+                <div class="panel-title">
+                    My Territories
+                    <button class="btn btn-ghost" style="padding: 4px 8px; font-size: 12px;" id="btnDrawNew">+
+                        New</button>
+                </div>
+                <div class="territory-list" id="territoryList">
+                    <div class="empty-state" id="territoryEmpty" style="display: none;">No territories yet. Draw one on
+                        the map!</div>
+                </div>
+            </div>
+
+            <div class="panel-section" id="analysisFormPanel" style="display: none;">
+                <div class="panel-title">Run Analysis</div>
+                <form id="analysisForm">
+                    <input type="hidden" id="selectTerritoryId">
+                    <div style="margin-bottom: 16px;">
+                        <span style="font-size: 18px; font-weight: 600;" id="selectTerritoryName">Territory Name</span>
+                    </div>
+                    <div class="grid grid-2" style="margin-bottom: 16px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Date From</label>
+                            <input type="date" id="dateFrom" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Date To</label>
+                            <input type="date" id="dateTo" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;" id="btnAnalyze">Analyze
+                        Territory</button>
+                </form>
+            </div>
+
+            <div class="panel-section" id="resultsPanel" style="display: none; flex: 1; padding-bottom: 40px;">
+                <div class="panel-title">Results</div>
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <div class="score-badge" id="resScoreCircle" style="margin-bottom: 12px;">--</div>
+                    <div style="font-size: 18px; font-weight: 600;" id="resLabel">--</div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <div class="pollutant-row">
+                        <span style="width: 50px;">PM2.5</span>
+                        <span style="width: 50px; font-weight: 600;" id="resPM25">0</span>
+                        <div class="pollutant-bar-wrap">
+                            <div class="pollutant-bar" id="barPM25"></div>
+                        </div>
+                        <span style="width: 60px; text-align: right; font-size: 12px;" id="tagPM25"></span>
+                    </div>
+                    <div class="pollutant-row">
+                        <span style="width: 50px;">PM10</span>
+                        <span style="width: 50px; font-weight: 600;" id="resPM10">0</span>
+                        <div class="pollutant-bar-wrap">
+                            <div class="pollutant-bar" id="barPM10"></div>
+                        </div>
+                        <span style="width: 60px; text-align: right; font-size: 12px;" id="tagPM10"></span>
+                    </div>
+                    <div class="pollutant-row">
+                        <span style="width: 50px;">NO₂</span>
+                        <span style="width: 50px; font-weight: 600;" id="resNO2">0</span>
+                        <div class="pollutant-bar-wrap">
+                            <div class="pollutant-bar" id="barNO2"></div>
+                        </div>
+                        <span style="width: 60px; text-align: right; font-size: 12px;" id="tagNO2"></span>
+                    </div>
+                    <div class="pollutant-row">
+                        <span style="width: 50px;">SO₂</span>
+                        <span style="width: 50px; font-weight: 600;" id="resSO2">0</span>
+                        <div class="pollutant-bar-wrap">
+                            <div class="pollutant-bar" id="barSO2"></div>
+                        </div>
+                        <span style="width: 60px; text-align: right; font-size: 12px;" id="tagSO2"></span>
+                    </div>
+                    <div class="pollutant-row">
+                        <span style="width: 50px;">CO</span>
+                        <span style="width: 50px; font-weight: 600;" id="resCO">0</span>
+                        <div class="pollutant-bar-wrap">
+                            <div class="pollutant-bar" id="barCO"></div>
+                        </div>
+                        <span style="width: 60px; text-align: right; font-size: 12px;" id="tagCO"></span>
+                    </div>
+                    <div class="pollutant-row">
+                        <span style="width: 50px;">O₃</span>
+                        <span style="width: 50px; font-weight: 600;" id="resO3">0</span>
+                        <div class="pollutant-bar-wrap">
+                            <div class="pollutant-bar" id="barO3"></div>
+                        </div>
+                        <span style="width: 60px; text-align: right; font-size: 12px;" id="tagO3"></span>
+                    </div>
+                </div>
+
+                <button class="btn btn-ghost" style="width: 100%;" id="btnSaveReport">Save as Report</button>
+            </div>
+        </div>
+
+        <div id="map"></div>
+    </div>
+
+    <div class="modal-overlay" id="nameModal">
+        <div class="modal">
+            <h3 style="margin-bottom: 16px;">Name this territory</h3>
+            <div class="form-group">
+                <input type="text" id="newTerritoryName" placeholder="e.g. Factory Site A" required>
+            </div>
+            <div class="grid grid-2">
+                <button class="btn btn-ghost" id="btnCancelName">Cancel</button>
+                <button class="btn btn-primary" id="btnSaveName">Save</button>
+            </div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script src="/app/js/api.js"></script>
+    <script src="/app/js/map.js"></script>
+</body>
+
+</html>
