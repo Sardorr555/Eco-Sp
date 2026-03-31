@@ -1,13 +1,17 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from database import create_tables
 from routers import auth_router, territories, analysis, reports
 import os
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()
+
+# Disable noisy access logs
+logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
 app = FastAPI(title="Sputnik Eco")
 

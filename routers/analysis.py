@@ -61,10 +61,16 @@ async def run_analysis(
         raise HTTPException(404, "Territory not found")
 
     # 1. Fetch real satellite data
-    metrics = await fetch_air_quality(
-        territory.centroid_lat, territory.centroid_lon,
-        body.date_from, body.date_to
-    )
+    import httpx
+    try:
+        metrics = await fetch_air_quality(
+            territory.centroid_lat, territory.centroid_lon,
+            body.date_from, body.date_to
+        )
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=400, detail=f"Satellite API Error: {e.response.text}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Data Fetch Error: {str(e)}")
 
     # 2. Calculate score
     score = calc_score(metrics)

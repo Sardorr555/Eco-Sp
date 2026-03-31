@@ -1,6 +1,12 @@
+import os, json
+
+# Автоматически добавляем путь к установленному GTK3, чтобы WeasyPrint работал без перезагрузки системы
+gtk_path = r"C:\Program Files\GTK3-Runtime Win64\bin"
+if os.path.isdir(gtk_path) and gtk_path not in os.environ.get("PATH", ""):
+    os.environ["PATH"] = gtk_path + os.pathsep + os.environ.get("PATH", "")
+
 from weasyprint import HTML
 from models import Analysis
-import json, os
 
 REPORTS_DIR = "static/reports"
 os.makedirs(REPORTS_DIR, exist_ok=True)

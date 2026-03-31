@@ -55,3 +55,15 @@ def download_report(id: int, user: User = Depends(get_current_user), db: Session
     if not report or not os.path.exists(report.pdf_path):
         raise HTTPException(404, "Not found")
     return FileResponse(report.pdf_path, media_type="application/pdf", filename=f"{report.title}.pdf")
+
+@router.delete("/{id}")
+def delete_report(id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    r = db.query(Report).filter(Report.id == id, Report.user_id == user.id).first()
+    if not r: raise HTTPException(404, "Report not found")
+    try:
+        if os.path.exists(r.pdf_path):
+            os.remove(r.pdf_path)
+    except: pass
+    db.delete(r)
+    db.commit()
+    return {"ok": True}

@@ -39,3 +39,15 @@ def login(body: LoginBody, db: Session = Depends(get_db)):
 def me(user: User = Depends(get_current_user)):
     return {"id": user.id, "email": user.email, "full_name": user.full_name,
             "company": user.company, "plan": user.plan}
+
+class UpdateProfileBody(BaseModel):
+    full_name: str
+    company: str
+
+@router.put("/me")
+def update_me(body: UpdateProfileBody, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user.full_name = body.full_name
+    user.company = body.company
+    db.commit()
+    db.refresh(user)
+    return {"id": user.id, "email": user.email, "full_name": user.full_name, "company": user.company, "plan": user.plan}
