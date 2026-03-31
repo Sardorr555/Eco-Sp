@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Спутник Эко — Экологик мониторинг платформаси</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #1D9E75;
+    --green-light: #5DCAA5;
+    --green-dark: #0F6E56;
+    --green-pale: #E1F5EE;
+    --ink: #0D1A14;
+    --ink2: #2A3D34;
+    --muted: #6B8A7A;
+    --border: rgba(29,158,117,0.15);
+    --surface: #F4FAF7;
+    --white: #FFFFFF;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--ink);
+    color: var(--white);
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.25rem 3rem;
+    background: rgba(13,26,20,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem;
+    color: var(--white); text-decoration: none; letter-spacing: -0.02em;
+  }
+  .nav-logo .dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--green); display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .nav-logo .dot::after {
+    content: ''; position: absolute;
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid rgba(29,158,117,0.35);
+    animation: ping 2s ease-in-out infinite;
+  }
+  @keyframes ping {
+    0%,100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.3); opacity: 0; }
+  }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a {
+    color: rgba(255,255,255,0.65); text-decoration: none;
+    font-size: 0.9rem; font-weight: 400; transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--white); }
+  .nav-cta {
+    background: var(--green); color: var(--white);
+    padding: 0.55rem 1.3rem; border-radius: 100px;
+    font-size: 0.875rem; font-weight: 500; text-decoration: none;
+    transition: background 0.2s;
+  }
+  .nav-cta:hover { background: var(--green-dark); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 8rem 2rem 5rem; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(29,158,117,0.12) 0%, transparent 70%);
+  }
+  .grid-lines {
+    position: absolute; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(29,158,117,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(29,158,117,0.06) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* orbit animation */
+  .orbit-wrap {
+    position: relative; width: 160px; height: 160px;
+    margin: 0 auto 2.5rem; z-index: 1;
+  }
+  .orbit-core {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 64px; height: 64px; border-radius: 50%;
+    background: rgba(29,158,117,0.15);
+    border: 1px solid rgba(29,158,117,0.4);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .orbit-core svg { width: 32px; height: 32px; }
+  .orbit-ring {
+    position: absolute; top: 50%; left: 50%;
+    border-radius: 50%; border: 1px dashed rgba(29,158,117,0.25);
+  }
+  .ring1 { width: 100px; height: 100px; margin: -50px 0 0 -50px; animation: spin 8s linear infinite; }
+  .ring2 { width: 148px; height: 148px; margin: -74px 0 0 -74px; animation: spin 14s linear infinite reverse; }
+  .orbit-dot {
+    position: absolute; border-radius: 50%;
+    top: 0; left: 50%; transform: translateX(-50%);
+  }
+  .d1 { width: 8px; height: 8px; background: var(--green); margin-left: -4px; }
+  .d2 { width: 6px; height: 6px; background: var(--green-light); margin-left: -3px; top: auto; bottom: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .hero-tag {
+    display: inline-block; z-index: 1; margin-bottom: 1.5rem;
+    background: rgba(29,158,117,0.15); border: 1px solid rgba(29,158,117,0.3);
+    color: var(--green-light); padding: 0.35rem 1rem; border-radius: 100px;
+    font-size: 0.8rem; font-weight: 500; letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    line-height: 1.0; letter-spacing: -0.03em;
+    color: var(--white); z-index: 1; max-width: 800px;
+    margin-bottom: 1.25rem;
+  }
+  .hero h1 .accent { color: var(--green); }
+  .hero p {
+    font-size: clamp(1rem, 2vw, 1.2rem); color: rgba(255,255,255,0.6);
+    max-width: 520px; z-index: 1; margin-bottom: 2.5rem; font-weight: 300;
+  }
+  .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; z-index: 1; }
+  .btn-primary {
+    background: var(--green); color: var(--white);
+    padding: 0.85rem 2rem; border-radius: 100px;
+    font-size: 1rem; font-weight: 500; text-decoration: none;
+    transition: all 0.2s; border: none; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-primary:hover { background: var(--green-dark); transform: translateY(-2px); }
+  .btn-ghost {
+    background: transparent; color: rgba(255,255,255,0.8);
+    padding: 0.85rem 2rem; border-radius: 100px;
+    font-size: 1rem; font-weight: 400; text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.2); transition: all 0.2s;
+  }
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.5); color: var(--white); }
+
+  /* stats strip */
+  .stats-strip {
+    background: rgba(29,158,117,0.06); border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: center; flex-wrap: wrap; gap: 0;
+  }
+  .stat-item {
+    padding: 1.75rem 3rem; text-align: center;
+    border-right: 1px solid var(--border); flex: 1; min-width: 160px;
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 700;
+    color: var(--green); display: block;
+  }
+  .stat-label { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 2px; }
+
+  /* ── SECTIONS ── */
+  section { padding: 6rem 2rem; }
+  .container { max-width: 1080px; margin: 0 auto; }
+  .section-tag {
+    font-size: 0.75rem; font-weight: 500; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--green); margin-bottom: 1rem;
+    display: block;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    letter-spacing: -0.02em; line-height: 1.15;
+    color: var(--white); margin-bottom: 1rem;
+  }
+  .section-sub {
+    font-size: 1.05rem; color: rgba(255,255,255,0.5);
+    max-width: 520px; font-weight: 300; line-height: 1.7;
+  }
+
+  /* ── PROBLEM ── */
+  .problem-section { background: rgba(255,255,255,0.02); }
+  .problem-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1px; background: var(--border); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden; margin-top: 3rem;
+  }
+  .problem-card {
+    background: var(--ink); padding: 2rem;
+    transition: background 0.2s;
+  }
+  .problem-card:hover { background: rgba(29,158,117,0.05); }
+  .prob-num {
+    font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800;
+    color: rgba(255,255,255,0.06); line-height: 1; margin-bottom: 1rem;
+  }
+  .prob-title {
+    font-size: 1rem; font-weight: 500; color: var(--white);
+    margin-bottom: 0.5rem;
+  }
+  .prob-text { font-size: 0.875rem; color: rgba(255,255,255,0.45); line-height: 1.65; }
+
+  /* ── HOW IT WORKS ── */
+  .steps {
+    display: flex; flex-direction: column; gap: 1px;
+    margin-top: 3rem; position: relative;
+  }
+  .step {
+    display: flex; gap: 2rem; align-items: flex-start;
+    padding: 2rem; background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border); border-radius: 12px;
+    transition: all 0.25s;
+  }
+  .step:hover { background: rgba(29,158,117,0.06); border-color: rgba(29,158,117,0.3); }
+  .step-num {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem;
+    color: var(--green); background: rgba(29,158,117,0.12);
+    border: 1px solid rgba(29,158,117,0.25); border-radius: 50%;
+    width: 44px; height: 44px; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+  }
+  .step-body h3 { font-size: 1rem; font-weight: 500; color: var(--white); margin-bottom: 0.4rem; }
+  .step-body p { font-size: 0.875rem; color: rgba(255,255,255,0.45); line-height: 1.65; }
+
+  /* ── FOR WHO ── */
+  .audience-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px; margin-top: 3rem;
+  }
+  .aud-card {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem;
+    transition: all 0.2s;
+  }
+  .aud-card:hover {
+    background: rgba(29,158,117,0.08);
+    border-color: rgba(29,158,117,0.3);
+    transform: translateY(-4px);
+  }
+  .aud-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(29,158,117,0.12); border: 1px solid rgba(29,158,117,0.2);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1rem;
+  }
+  .aud-title { font-size: 0.95rem; font-weight: 500; color: var(--white); margin-bottom: 0.4rem; }
+  .aud-desc { font-size: 0.82rem; color: rgba(255,255,255,0.4); line-height: 1.6; }
+
+  /* ── PRICING ── */
+  .pricing-section { background: rgba(29,158,117,0.04); }
+  .pricing-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px; margin-top: 3rem;
+  }
+  .price-card {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    border-radius: 16px; padding: 2rem; transition: all 0.2s;
+  }
+  .price-card.featured {
+    background: var(--green); border-color: var(--green);
+  }
+  .price-card:hover:not(.featured) {
+    border-color: rgba(29,158,117,0.4); transform: translateY(-4px);
+  }
+  .price-label { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.75rem; }
+  .price-card:not(.featured) .price-label { color: var(--green); }
+  .price-card.featured .price-label { color: rgba(255,255,255,0.7); }
+  .price-amount {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2.2rem;
+    color: var(--white); line-height: 1;
+  }
+  .price-period { font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-bottom: 1.25rem; }
+  .price-card.featured .price-period { color: rgba(255,255,255,0.7); }
+  .price-features { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
+  .price-features li { font-size: 0.875rem; color: rgba(255,255,255,0.6); display: flex; align-items: center; gap: 8px; }
+  .price-card.featured .price-features li { color: rgba(255,255,255,0.85); }
+  .price-features li::before {
+    content: ''; width: 16px; height: 16px; border-radius: 50%;
+    background: rgba(29,158,117,0.2); border: 1px solid rgba(29,158,117,0.4);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    background-image: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.5 4L3 5.5L6.5 2' stroke='%231D9E75' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: center;
+  }
+  .price-card.featured .price-features li::before {
+    background-color: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3);
+    background-image: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.5 4L3 5.5L6.5 2' stroke='white' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+  .price-btn {
+    display: block; width: 100%; text-align: center;
+    padding: 0.75rem; border-radius: 100px; font-size: 0.9rem;
+    font-weight: 500; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none;
+  }
+  .price-btn-outline {
+    background: transparent; color: var(--white);
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .price-btn-outline:hover { border-color: var(--green); color: var(--green); }
+  .price-btn-white { background: var(--white); color: var(--green-dark); }
+  .price-btn-white:hover { background: var(--green-pale); }
+
+  /* ── CTA ── */
+  .cta-section {
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .cta-glow {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: 600px; height: 300px; border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(29,158,117,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cta-section h2 {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    letter-spacing: -0.02em; color: var(--white);
+    max-width: 600px; margin: 0 auto 1rem; position: relative; z-index: 1;
+  }
+  .cta-section p { color: rgba(255,255,255,0.5); margin-bottom: 2rem; font-size: 1.05rem; position: relative; z-index: 1; }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem 3rem;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+  .footer-logo {
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    color: rgba(255,255,255,0.4); font-size: 0.9rem;
+  }
+  .footer-note { font-size: 0.8rem; color: rgba(255,255,255,0.25); }
+
+  /* ── ANIMATIONS ── */
+  .fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 640px) {
+    nav { padding: 1rem 1.25rem; }
+    .nav-links { display: none; }
+    section { padding: 4rem 1.25rem; }
+    .stat-item { padding: 1.25rem 1.5rem; }
+    footer { padding: 1.5rem 1.25rem; flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="dot">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="7" cy="7" r="3" fill="white"/>
+        <ellipse cx="7" cy="7" rx="6" ry="2.5" stroke="white" stroke-width="0.8" fill="none" transform="rotate(-30 7 7)" opacity="0.6"/>
+      </svg>
+    </div>
+    Спутник Эко
+  </a>
+  <ul class="nav-links">
+    <li><a href="#muammo">Муаммо</a></li>
+    <li><a href="#qanday">Қандай ишлайди</a></li>
+    <li><a href="#kimlar">Кимлар учун</a></li>
+    <li><a href="#narx">Нарх</a></li>
+  </ul>
+  <a href="#narx" class="nav-cta">Бошлаш →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="grid-lines"></div>
+
+  <div class="orbit-wrap">
+    <div class="orbit-ring ring1">
+      <div class="orbit-dot d1"></div>
+      <div class="orbit-dot d2"></div>
+    </div>
+    <div class="orbit-ring ring2"></div>
+    <div class="orbit-core">
+      <svg viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="6" fill="#1D9E75" opacity="0.3"/>
+        <circle cx="16" cy="16" r="3.5" fill="#1D9E75"/>
+        <ellipse cx="16" cy="16" rx="14" ry="5.5" stroke="#1D9E75" stroke-width="1" fill="none" opacity="0.4" transform="rotate(-25 16 16)"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="hero-tag">🛰 Экологик мониторинг стартапи</div>
+
+  <h1>
+    Ер ҳаммасини кўради.<br>
+    <span class="accent">Биз тушунтирамиз.</span>
+  </h1>
+
+  <p>Спутник маълумотларидан исталган ҳудуднинг ҳаво сифатини — оддий ва тушунарли ҳисоботга бир зумда айлантирамиз.</p>
+
+  <div class="hero-btns">
+    <a href="#narx" class="btn-primary">Бепул синаб кўриш →</a>
+    <a href="#qanday" class="btn-ghost">Қандай ишлайди?</a>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-strip">
+  <div class="stat-item">
+    <span class="stat-num">99%</span>
+    <span class="stat-label">аҳоли ифлос ҳавода нафас олади (ВОЗ)</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num">$4.2B</span>
+    <span class="stat-label">глобал экомониторинг бозори</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num">$0</span>
+    <span class="stat-label">спутник маълумоти нархи</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num">2 сон</span>
+    <span class="stat-label">таҳлил вақти</span>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section id="muammo" class="problem-section">
+  <div class="container">
+    <span class="section-tag fade-in">Муаммо</span>
+    <h2 class="section-title fade-in">Маълумот бор — уни ҳеч ким тушунмайди</h2>
+    <p class="section-sub fade-in">NASA ва ESA ҳар куни тонналаб маълумот юборади. Аммо у фақат олимлар учун — бизнес, ҳокимлик ва аҳоли учун эмас.</p>
+    <div class="problem-grid">
+      <div class="problem-card fade-in">
+        <div class="prob-num">01</div>
+        <div class="prob-title">Аҳоли хабарсиз</div>
+        <div class="prob-text">Одамлар ҳавонинг ифлослигини билмайди ва ўз соғлиғини хавф остига қўяди.</div>
+      </div>
+      <div class="problem-card fade-in">
+        <div class="prob-num">02</div>
+        <div class="prob-title">Маълумот мураккаб</div>
+        <div class="prob-text">Спутник маълумотларини ўқиш учун махсус илмий билим ва дастурлар керак.</div>
+      </div>
+      <div class="problem-card fade-in">
+        <div class="prob-num">03</div>
+        <div class="prob-title">Мавжуд тизимлар қиммат</div>
+        <div class="prob-text">Enterprise-ечимлар йилига $50 000+ туради. Кичик бизнес учун бозор бўш.</div>
+      </div>
+      <div class="problem-card fade-in">
+        <div class="prob-num">04</div>
+        <div class="prob-title">Ўзбекистонда мониторинг йўқ</div>
+        <div class="prob-text">Навоий, Ангрен, Орол — энг ифлос ҳудудлар, лекин тушунарли ҳисобот йўқ.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="qanday">
+  <div class="container">
+    <span class="section-tag fade-in">Қандай ишлайди?</span>
+    <h2 class="section-title fade-in">4 та оддий қадам</h2>
+    <p class="section-sub fade-in">Техник билим керак эмас. Харитада белгилайсиз — натижа тайёр.</p>
+    <div class="steps">
+      <div class="step fade-in">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Ҳудудни белгилайсиз</h3>
+          <p>Харитада маҳалла, завод атрофи ёки шаҳар доирасини чизасиз. Исталган жой — исталган мамлакат.</p>
+        </div>
+      </div>
+      <div class="step fade-in">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Спутник маълумот юборади</h3>
+          <p>ESA Sentinel-5P ва NASA TEMPO йўлдошлари NO₂, CO, SO₂, PM2.5 ва PM10 миқдорини ўлчайди.</p>
+        </div>
+      </div>
+      <div class="step fade-in">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>AI таҳлил қилади</h3>
+          <p>Сунъий интеллект рақамларни ўқиб, инсон тилида хулоса чиқаради: "бу ҳудудда нафас олиш хавфли".</p>
+        </div>
+      </div>
+      <div class="step fade-in">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Ҳисобот тайёр</h3>
+          <p>Инвестор, хоким ёки журналист учун тайёр PDF ҳисобот — чиройли, аниқ, тушунарли.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOR WHO -->
+<section id="kimlar" style="background: rgba(255,255,255,0.02);">
+  <div class="container">
+    <span class="section-tag fade-in">Кимлар учун?</span>
+    <h2 class="section-title fade-in">Экология ҳаммани қизиқтиради</h2>
+    <p class="section-sub fade-in">Давлатдан тортиб оддий фуқарогача — ҳар бир томон учун алоҳида қиймат.</p>
+    <div class="audience-grid">
+      <div class="aud-card fade-in">
+        <div class="aud-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <rect x="3" y="8" width="14" height="9" rx="1.5" stroke="#1D9E75" stroke-width="1.2"/>
+            <path d="M7 8V6a3 3 0 016 0v2" stroke="#1D9E75" stroke-width="1.2"/>
+            <circle cx="10" cy="13" r="1.5" fill="#1D9E75"/>
+          </svg>
+        </div>
+        <div class="aud-title">Шаҳар ҳокимликлари</div>
+        <div class="aud-desc">Ҳудудлар бўйича мониторинг, аҳолига экологик ҳисобот тақдим этиш.</div>
+      </div>
+      <div class="aud-card fade-in">
+        <div class="aud-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M3 16V8l7-5 7 5v8" stroke="#1D9E75" stroke-width="1.2"/>
+            <rect x="7" y="11" width="6" height="5" rx="1" stroke="#1D9E75" stroke-width="1.2"/>
+          </svg>
+        </div>
+        <div class="aud-title">Саноат корхоналари</div>
+        <div class="aud-desc">Экологик нормативларга мувофиқлигини исботлаш ва назорат қилиш.</div>
+      </div>
+      <div class="aud-card fade-in">
+        <div class="aud-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 3L12.5 8.5H18L13.5 11.8L15.5 17.5L10 14L4.5 17.5L6.5 11.8L2 8.5H7.5L10 3Z" stroke="#1D9E75" stroke-width="1.2" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="aud-title">ESG компаниялар</div>
+        <div class="aud-desc">Инвесторлар учун экологик ҳисоботлар тайёрлаш — автомат ва аниқ.</div>
+      </div>
+      <div class="aud-card fade-in">
+        <div class="aud-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="8" r="3.5" stroke="#1D9E75" stroke-width="1.2"/>
+            <path d="M3 18c0-3.9 3.1-7 7-7s7 3.1 7 7" stroke="#1D9E75" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="aud-title">Экологик НКОлар</div>
+        <div class="aud-desc">Объектив маълумотлар асосида ҳимоя кампаниялари олиб бориш.</div>
+      </div>
+      <div class="aud-card fade-in">
+        <div class="aud-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <rect x="3" y="3" width="14" height="10" rx="2" stroke="#1D9E75" stroke-width="1.2"/>
+            <path d="M7 17h6M10 13v4" stroke="#1D9E75" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="aud-title">Қурилиш компаниялар</div>
+        <div class="aud-desc">Қурилиш бошлашдан олдин ҳудуднинг экологик баҳоси.</div>
+      </div>
+      <div class="aud-card fade-in">
+        <div class="aud-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 2C6.1 2 3 5.1 3 9c0 5.3 7 11 7 11s7-5.7 7-11c0-3.9-3.1-7-7-7z" stroke="#1D9E75" stroke-width="1.2"/>
+            <circle cx="10" cy="9" r="2.5" stroke="#1D9E75" stroke-width="1.2"/>
+          </svg>
+        </div>
+        <div class="aud-title">Кўчмас мулк агентлар</div>
+        <div class="aud-desc">Уй харидорларга ҳудуд экологиясини тушунтириш.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="narx" class="pricing-section">
+  <div class="container">
+    <span class="section-tag fade-in">Нарх</span>
+    <h2 class="section-title fade-in">Ҳар бир ҳажмга мос тариф</h2>
+    <p class="section-sub fade-in">Бепул синаб кўришдан бошланг. Тўлов фақат натижадан кейин.</p>
+    <div class="pricing-grid">
+      <div class="price-card fade-in">
+        <div class="price-label">Starter</div>
+        <div class="price-amount">$99</div>
+        <div class="price-period">/ ойига</div>
+        <ul class="price-features">
+          <li>1 та ҳудуд мониторинги</li>
+          <li>Ойлик PDF ҳисобот</li>
+          <li>NO₂, CO, PM2.5 таҳлили</li>
+          <li>Email қўллаб-қувватлаш</li>
+        </ul>
+        <a href="#" class="price-btn price-btn-outline">Бошлаш →</a>
+      </div>
+      <div class="price-card featured fade-in">
+        <div class="price-label">Pro — Машҳур</div>
+        <div class="price-amount">$499</div>
+        <div class="price-period">/ ойига</div>
+        <ul class="price-features">
+          <li>5 та ҳудудгача</li>
+          <li>Ҳафталик ҳисоботлар</li>
+          <li>AI таҳлил ва тавсиялар</li>
+          <li>API уланиш</li>
+          <li>Приоритет қўллаб-қувватлаш</li>
+        </ul>
+        <a href="#" class="price-btn price-btn-white">Бошлаш →</a>
+      </div>
+      <div class="price-card fade-in">
+        <div class="price-label">Enterprise</div>
+        <div class="price-amount">$2000+</div>
+        <div class="price-period">/ ойига</div>
+        <ul class="price-features">
+          <li>Чекланмаган ҳудудлар</li>
+          <li>Кундалик мониторинг</li>
+          <li>Тўлиқ интеграция</li>
+          <li>SLA кафолати</li>
+          <li>Шахсий менежер</li>
+        </ul>
+        <a href="#" class="price-btn price-btn-outline">Боғланиш →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-glow"></div>
+  <div class="container" style="text-align:center;">
+    <h2 class="fade-in">Ҳудудингиз ҳавосини текширинг</h2>
+    <p class="fade-in">Рўйхатдан ўтиш 2 дақиқа. Биринчи ҳисобот — бепул.</p>
+    <a href="#" class="btn-primary fade-in" style="display:inline-flex; font-size:1.05rem; padding: 1rem 2.5rem;">
+      Бепул синаб кўриш →
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Спутник Эко © 2025</div>
+  <div class="footer-note">Ер юзидаги экологик ҳолатни — космосдан</div>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
