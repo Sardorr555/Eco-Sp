@@ -1,7 +1,47 @@
 import os
 import json
-import httpx
-from anthropic import AsyncAnthropic
+from openai import AsyncOpenAI
+
+async def call_ai(system_prompt: str, user_prompt: str) -> str:
+    # 1. Try DeepSeek first
+    ds_key = os.environ.get("DEEPSEEK_API_KEY")
+    ds_err = None
+    if ds_key and ds_key != "your_deepseek_api_key_here":
+        try:
+            client = AsyncOpenAI(api_key=ds_key, base_url="https://api.deepseek.com")
+            response = await client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                response_format={"type": "json_object"}
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            ds_err = e
+            print(f"DeepSeek failed: {e}. Falling back to ChatGPT...")
+    
+    # 2. Try ChatGPT (OpenAI) as fallback or if DeepSeek key is missing
+    oai_key = os.environ.get("OPENAI_API_KEY")
+    if oai_key and oai_key != "your_openai_api_key_here":
+        try:
+            client = AsyncOpenAI(api_key=oai_key)
+            response = await client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                response_format={"type": "json_object"}
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            print(f"ChatGPT failed: {e}.")
+            raise Exception("All AI backends failed or no API keys are provided.")
+    
+    # If no keys at all
+    raise Exception(f"No valid API keys configured. Set DEEPSEEK_API_KEY or OPENAI_API_KEY. DeepSeek error (if attempted): {ds_err}")
 
 async def run_ai_analysis_safe(territory_name: str, date_from: str, date_to: str, metrics: dict, score: int, label: str, previous_analyses: list = None) -> dict:
     """Run AI analysis safely, returning default empty values on failure."""
@@ -16,12 +56,6 @@ async def run_ai_analysis_safe(territory_name: str, date_from: str, date_to: str
         "ai_forecast": ""
     }
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return default_res
-
-    client = AsyncAnthropic(api_key=api_key)
-    
     # Format current metrics
     metrics_str = json.dumps(metrics, indent=2)
     
@@ -32,7 +66,9 @@ async def run_ai_analysis_safe(territory_name: str, date_from: str, date_to: str
         for a in previous_analyses:
             history_context += f"- Period {a.date_from} to {a.date_to}: Score {a.overall_score} ({a.label}), PM2.5: {a.pm25}, PM10: {a.pm10}, NO2: {a.no2}, SO2: {a.so2}\n"
 
-    prompt = f"""
+    system_prompt = "You are an expert environmental and air quality analyst. Provide objective, concise, and structured JSON output. Do NOT include markdown blocks around the JSON; the output MUST be valid raw JSON."
+    
+    user_prompt = f"""
     Analyze the air quality for the territory '{territory_name}' from {date_from} to {date_to}.
     The overall calculated score is {score}/100 and the label is '{label}'.
     
@@ -42,7 +78,7 @@ async def run_ai_analysis_safe(territory_name: str, date_from: str, date_to: str
     Historical Context (for trend and forecast):
     {history_context}
     
-    Return a strictly valid JSON object covering the following keys, with no markdown formatting around it:
+    Return a strictly valid JSON object covering the following keys:
     - summary (string): A brief summary of the air quality (2-3 sentences).
     - risk_level (string): One of 'low', 'medium', 'high'.
     - main_pollutant (string): Name of the main pollutant of concern (e.g. 'pm25').
@@ -54,21 +90,15 @@ async def run_ai_analysis_safe(territory_name: str, date_from: str, date_to: str
     """
 
     try:
-        response = await client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=1000,
-            system="You are an expert environmental and air quality analyst. Provide objective, concise, and structured JSON output.",
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        )
-        content = response.content[0].text
-        # Optional: cleanup json block formatting if returned
+        content = await call_ai(system_prompt, user_prompt)
+        
+        # Cleanup
+        content = content.strip()
         if content.startswith("```json"):
-            content = content.split("```json")[1]
-            if content.endswith("```"):
-                content = content[:-3]
-        content = content.strip().strip('`')
+            content = content.replace("```json", "", 1)
+        if content.endswith("```"):
+            content = content[:-3]
+        content = content.strip()
         
         data = json.loads(content)
         

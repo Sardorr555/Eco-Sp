@@ -158,7 +158,7 @@ async def generate_pdf(analysis: Analysis, title: str) -> str:
 
     <div class="footer">
       Data: Open-Meteo Air Quality API (Copernicus CAMS) &nbsp;·&nbsp;
-      AI: Claude (Anthropic) &nbsp;·&nbsp;
+      AI: DeepSeek / ChatGPT &nbsp;·&nbsp;
       Sputnik Eco Platform &nbsp;·&nbsp;
       Generated {analysis.created_at.strftime('%Y-%m-%d')}
     </div>
