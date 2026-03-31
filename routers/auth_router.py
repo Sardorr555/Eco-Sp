@@ -21,22 +21,21 @@ class LoginBody(BaseModel):
 def register(body: RegisterBody, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == body.email).first():
         raise HTTPException(400, "Email already registered")
-    user = User(
-        email=body.email,
-        password_hash=hash_password(body.password),
-        full_name=body.full_name,
-        company=body.company
-    )
+    user = User(email=body.email, password_hash=hash_password(body.password),
+                full_name=body.full_name, company=body.company)
     db.add(user); db.commit(); db.refresh(user)
-    return {"access_token": create_token(user.id), "user": {"id": user.id, "email": user.email, "full_name": user.full_name, "plan": user.plan}}
+    return {"access_token": create_token(user.id),
+            "user": {"id": user.id, "email": user.email, "full_name": user.full_name, "plan": user.plan}}
 
 @router.post("/login")
 def login(body: LoginBody, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == body.email).first()
     if not user or not verify_password(body.password, user.password_hash):
         raise HTTPException(401, "Invalid credentials")
-    return {"access_token": create_token(user.id), "user": {"id": user.id, "email": user.email, "full_name": user.full_name, "plan": user.plan}}
+    return {"access_token": create_token(user.id),
+            "user": {"id": user.id, "email": user.email, "full_name": user.full_name, "plan": user.plan}}
 
 @router.get("/me")
 def me(user: User = Depends(get_current_user)):
-    return {"id": user.id, "email": user.email, "full_name": user.full_name, "company": user.company, "plan": user.plan}
+    return {"id": user.id, "email": user.email, "full_name": user.full_name,
+            "company": user.company, "plan": user.plan}

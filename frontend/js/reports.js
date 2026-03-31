@@ -31,16 +31,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const dateLabel = r.date_from ? `${r.date_from} to ${r.date_to}` : 'N/A';
 
+            const riskColors = { 'low': '#00c9a7', 'medium': '#f5a623', 'high': '#f05252' };
+            const riskBgs = { 'low': 'rgba(0,201,167,0.15)', 'medium': 'rgba(245,166,35,0.15)', 'high': 'rgba(240,82,82,0.15)' };
+            const risk = r.risk || 'medium';
+            const riskBadge = `<span style="background:${riskBgs[risk]}; color:${riskColors[risk]}; padding:3px 8px; border-radius:4px; font-size:11px; text-transform:uppercase; font-weight:600">${risk} Risk</span>`;
+
             card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <h3 style="font-size: 16px; margin-bottom: 4px;">${r.territory || 'Unknown Territory'}</h3>
+                    <div style="flex:1; margin-right:8px; overflow:hidden">
+                        <h3 style="font-size: 16px; margin-bottom: 4px; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;" title="${r.territory || 'Unknown Territory'}">${r.territory || 'Unknown Territory'}</h3>
                         <div style="font-size: 12px; color: var(--muted);">${dateLabel}</div>
                     </div>
-                    ${r.score !== null ? `<div class="score-badge" style="width: 48px; height: 48px; font-size: 16px; border: 2px solid ${scoreColor}; color: ${scoreColor}; background: transparent;">${r.score}</div>` : ''}
+                    ${r.score !== null ? `<div class="score-badge" style="width: 48px; height: 48px; font-size: 16px; border: 2px solid ${scoreColor}; color: ${scoreColor}; background: transparent; flex-shrink:0;">${r.score}</div>` : ''}
                 </div>
                 
-                ${r.label ? `<div><span class="tag ${tagClass}">${r.label}</span></div>` : ''}
+                <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
+                    ${r.label ? `<span class="tag ${tagClass}">${r.label}</span>` : ''}
+                    ${riskBadge}
+                </div>
+                
+                ${r.ai_summary ? `<p style="font-size:13px;color:var(--muted);margin-top:4px;line-height:1.5">${r.ai_summary}</p>` : ''}
                 
                 <div style="margin-top: auto; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 16px;">
                     <span style="font-size: 12px; color: var(--muted);">Generated: ${r.created_at.split('T')[0]}</span>

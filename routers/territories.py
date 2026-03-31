@@ -4,43 +4,30 @@ from pydantic import BaseModel
 from database import get_db
 from models import Territory, Analysis
 from auth import get_current_user, User
-import json, math
+import json
 
 router = APIRouter()
 
-def calc_centroid(geojson_str: str):
-    """Calculate centroid of a GeoJSON polygon"""
+def calc_centroid(geojson_str):
     try:
         geo = json.loads(geojson_str)
         coords = geo["geometry"]["coordinates"][0]
-        lat = sum(c[1] for c in coords) / len(coords)
-        lon = sum(c[0] for c in coords) / len(coords)
-        return round(lat, 6), round(lon, 6)
-    except:
-        return 0.0, 0.0
+        return round(sum(c[1] for c in coords)/len(coords), 6), round(sum(c[0] for c in coords)/len(coords), 6)
+    except: return 0.0, 0.0
 
-def calc_area_km2(geojson_str: str) -> float:
-    """Rough area estimate in km²"""
+def calc_area_km2(geojson_str):
     try:
         geo = json.loads(geojson_str)
         coords = geo["geometry"]["coordinates"][0]
-        # Shoelace formula in degrees → convert to km²
-        n = len(coords)
-        area = 0
+        n = len(coords); area = 0
         for i in range(n):
-            j = (i + 1) % n
-            area += coords[i][0] * coords[j][1]
-            area -= coords[j][0] * coords[i][1]
-        area_deg2 = abs(area) / 2
-        area_km2 = area_deg2 * (111.32 ** 2)
-        return round(area_km2, 2)
-    except:
-        return 0.0
+            j = (i+1)%n
+            area += coords[i][0]*coords[j][1] - coords[j][0]*coords[i][1]
+        return round(abs(area)/2 * (111.32**2), 2)
+    except: return 0.0
 
 class TerritoryBody(BaseModel):
-    name: str
-    geojson: str
-    color: str = "#00c9a7"
+    name: str; geojson: str; color: str = "#00c9a7"
 
 @router.get("/")
 def list_territories(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -54,6 +41,7 @@ def list_territories(user: User = Depends(get_current_user), db: Session = Depen
             "geojson": t.geojson,
             "last_score": last.overall_score if last else None,
             "last_label": last.label if last else None,
+            "last_risk": last.ai_risk_level if last else None,
             "created_at": t.created_at.isoformat()
         })
     return result
@@ -61,11 +49,10 @@ def list_territories(user: User = Depends(get_current_user), db: Session = Depen
 @router.post("/")
 def create_territory(body: TerritoryBody, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     lat, lon = calc_centroid(body.geojson)
-    area = calc_area_km2(body.geojson)
     t = Territory(user_id=user.id, name=body.name, geojson=body.geojson,
-                  centroid_lat=lat, centroid_lon=lon, area_km2=area, color=body.color)
+                  centroid_lat=lat, centroid_lon=lon, area_km2=calc_area_km2(body.geojson), color=body.color)
     db.add(t); db.commit(); db.refresh(t)
-    return {"id": t.id, "name": t.name, "centroid_lat": lat, "centroid_lon": lon, "area_km2": area}
+    return {"id": t.id, "name": t.name, "centroid_lat": lat, "centroid_lon": lon}
 
 @router.delete("/{id}")
 def delete_territory(id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):

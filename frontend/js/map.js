@@ -48,8 +48,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const btn = document.getElementById('btnAnalyze');
         const origText = btn.textContent;
+
+        document.getElementById('resultsPanel').style.display = 'block';
+        document.getElementById('results-panel').style.display = 'block';
+        document.getElementById('ai-analysis-container').innerHTML = `
+        <div id="ai-skeleton">
+            <div class="skeleton" style="height:16px;width:60%;margin-bottom:10px"></div>
+            <div class="skeleton" style="height:60px;margin-bottom:10px"></div>
+            <div class="skeleton" style="height:40px;width:80%"></div>
+        </div>`;
+
         try {
-            btn.textContent = 'Fetching satellite data...';
+            btn.textContent = '🤖 Running AI analysis...';
             btn.disabled = true;
 
             const res = await api.analysis.run({
@@ -80,8 +90,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.disabled = true;
 
         try {
-            // we need the analysis ID, but the form only has territory ID
-            // let's fetch the latest analysis for this territory
             const analyses = await api.analysis.byTerritory(parseInt(tid));
             if (!analyses || analyses.length === 0) throw new Error('No analysis found');
             const latest = analyses[0];
@@ -124,10 +132,14 @@ function getScoreColor(score) {
     return '#f05252';
 }
 
-function getScoreTagClass(score) {
-    if (score >= 60) return 'tag-good';
-    if (score >= 40) return 'tag-moderate';
-    return 'tag-poor';
+function getRiskBadge(risk) {
+    if (!risk) return '';
+    const colors = {
+        'low': 'color:#00c9a7',
+        'medium': 'color:#f5a623',
+        'high': 'color:#f05252'
+    };
+    return `<span style="font-size:10px;text-transform:uppercase;${colors[risk]}">${risk} Risk</span>`;
 }
 
 async function loadTerritories() {
@@ -173,8 +185,11 @@ async function loadTerritories() {
             };
             item.innerHTML = `
                 <div class="dot" style="background: ${color}"></div>
-                <div class="name">${t.name}</div>
-                <div class="score">${t.last_score || '--'}</div>
+                <div class="name" title="${t.name}">${t.name}</div>
+                <div class="score">
+                    <div>${t.last_score || '--'}</div>
+                    ${getRiskBadge(t.last_risk)}
+                </div>
             `;
             container.appendChild(item);
         });
@@ -202,6 +217,7 @@ function selectTerritory(t, color) {
 function showResults(res) {
     document.getElementById('resultsPanel').style.display = 'flex';
     document.getElementById('resultsPanel').style.flexDirection = 'column';
+    document.getElementById('results-panel').style.display = 'block';
 
     const c = document.getElementById('resScoreCircle');
     c.textContent = res.overall_score;
@@ -214,12 +230,17 @@ function showResults(res) {
     l.textContent = res.label;
     l.style.color = color;
 
+    document.getElementById('score-period').textContent = `${res.date_from} → ${res.date_to}`;
+
     setPollutant('PM25', res.pm25, 75);
     setPollutant('PM10', res.pm10, 150);
     setPollutant('NO2', res.no2, 200);
     setPollutant('SO2', res.so2, 500);
     setPollutant('CO', res.co, 10000);
     setPollutant('O3', res.o3, 240);
+
+    // AI Block
+    renderAIBlock(document.getElementById('ai-analysis-container'), res);
 
     // Refresh map to update color
     loadTerritories();
@@ -231,7 +252,6 @@ function setPollutant(id, val, max) {
     const bar = document.getElementById(`bar${id}`);
     bar.style.width = `${pct}%`;
 
-    // color logic based on value/pct roughly
     if (pct <= 30) {
         bar.style.background = 'var(--success)';
         document.getElementById(`tag${id}`).textContent = 'Good';

@@ -45,6 +45,17 @@ class Analysis(Base):
     # Derived
     overall_score = Column(Integer)   # 0–100
     label = Column(String)            # Excellent/Good/Moderate/Poor/Hazardous
+    
+    # AI fields
+    ai_summary = Column(Text)
+    ai_risk_level = Column(String)
+    ai_recommendations = Column(Text) # JSON string
+    ai_health_impact = Column(Text)
+    ai_main_pollutant = Column(String)
+    ai_trend = Column(Text)
+    ai_trend_direction = Column(String)
+    ai_forecast = Column(Text)
+    
     created_at = Column(DateTime, default=datetime.utcnow)
     territory = relationship("Territory", back_populates="analyses")
     report = relationship("Report", back_populates="analysis", uselist=False)

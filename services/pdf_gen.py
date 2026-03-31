@@ -1,6 +1,6 @@
 from weasyprint import HTML
 from models import Analysis
-import os
+import json, os
 
 REPORTS_DIR = "static/reports"
 os.makedirs(REPORTS_DIR, exist_ok=True)
@@ -11,47 +11,158 @@ def score_color(score):
     if score >= 40: return "#f5a623"
     return "#f05252"
 
+def risk_color(risk):
+    return {"low": "#00c9a7", "medium": "#f5a623", "high": "#f05252"}.get(risk, "#f5a623")
+
+def pollutant_status(val, good, moderate):
+    if val <= good: return ("good", "#00c9a7", "✓ Good")
+    if val <= moderate: return ("moderate", "#f5a623", "⚠ Moderate")
+    return ("poor", "#f05252", "✗ Poor")
+
 async def generate_pdf(analysis: Analysis, title: str) -> str:
     t = analysis.territory
     color = score_color(analysis.overall_score)
+    risk_col = risk_color(analysis.ai_risk_level or "medium")
 
-    html = f"""
-    <!DOCTYPE html><html><head><meta charset="UTF-8">
+    # Parse AI recommendations
+    recs = []
+    if analysis.ai_recommendations:
+        try:
+            recs = json.loads(analysis.ai_recommendations)
+        except:
+            recs = []
+
+    recs_html = "".join([
+        f'<li style="padding: 6px 0; color: #e8edf5; font-size: 13px;">🔹 {r}</li>'
+        for r in recs
+    ]) if recs else "<li style='color: #7a8ba0;'>No recommendations available</li>"
+
+    # Pollutants table rows
+    WHO = {"pm25": (5, 15), "pm10": (15, 45), "no2": (10, 25), "so2": (40, 125), "co": (100, 1000), "o3": (60, 100)}
+    NAMES = {"pm25": "PM2.5", "pm10": "PM10", "no2": "NO₂", "so2": "SO₂", "co": "CO", "o3": "O₃"}
+    LIMITS_DISPLAY = {"pm25": 5, "pm10": 15, "no2": 10, "so2": 40, "co": 100, "o3": 60}
+
+    rows = ""
+    for k, name in NAMES.items():
+        val = getattr(analysis, k) or 0
+        good, mod = WHO[k]
+        _, col, status_text = pollutant_status(val, good, mod)
+        rows += f'<tr><td>{name}</td><td style="font-family: monospace">{val:.1f}</td><td>{LIMITS_DISPLAY[k]}</td><td style="color:{col}; font-weight:600">{status_text}</td></tr>'
+
+    trend_icon = {"improving": "↗", "stable": "→", "worsening": "↘", "baseline": "◎"}.get(
+        analysis.ai_trend_direction or "baseline", "◎"
+    )
+    trend_color = {"improving": "#00c9a7", "stable": "#4f8ef7", "worsening": "#f05252", "baseline": "#7a8ba0"}.get(
+        analysis.ai_trend_direction or "baseline", "#7a8ba0"
+    )
+
+    ai_section = ""
+    if analysis.ai_summary:
+        forecast_row = f"""
+          <div style="margin-bottom: 20px;">
+            <div style="font-size: 11px; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">30-Day Forecast</div>
+            <p style="font-size: 13px; line-height: 1.6; color: #c5cfe0;">{analysis.ai_forecast or '—'}</p>
+          </div>
+        """ if analysis.ai_forecast else ""
+
+        trend_row = f"""
+          <div style="margin-bottom: 20px;">
+            <div style="font-size: 11px; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Trend vs Previous Periods</div>
+            <p style="font-size: 13px; line-height: 1.6; color: #c5cfe0;">{analysis.ai_trend or '—'}</p>
+          </div>
+        """ if analysis.ai_trend else ""
+
+        ai_section = f"""
+        <div style="page-break-before: avoid; margin-top: 32px;">
+          <div style="background: #111827; border-left: 4px solid #a78bfa; border-radius: 8px; padding: 24px 28px;">
+            <h2 style="color: #a78bfa; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;">✦ AI Environmental Analysis</h2>
+
+            <p style="font-size: 14px; line-height: 1.7; color: #e8edf5; margin-bottom: 20px;">{analysis.ai_summary}</p>
+
+            <table style="width: 100%; margin-bottom: 20px;">
+              <tr>
+                <td style="width: 33%; padding-right: 12px;">
+                  <div style="background: rgba(167,139,250,0.1); border-radius: 6px; padding: 12px 16px;">
+                    <div style="font-size: 11px; color: #7a8ba0; text-transform: uppercase; margin-bottom: 4px;">Risk Level</div>
+                    <div style="font-size: 18px; font-weight: 700; color: {risk_col};">{(analysis.ai_risk_level or 'medium').upper()}</div>
+                  </div>
+                </td>
+                <td style="width: 33%; padding-right: 12px;">
+                  <div style="background: rgba(167,139,250,0.1); border-radius: 6px; padding: 12px 16px;">
+                    <div style="font-size: 11px; color: #7a8ba0; text-transform: uppercase; margin-bottom: 4px;">Trend</div>
+                    <div style="font-size: 18px; font-weight: 700; color: {trend_color};">{trend_icon} {(analysis.ai_trend_direction or 'baseline').capitalize()}</div>
+                  </div>
+                </td>
+                <td style="width: 33%;">
+                  <div style="background: rgba(167,139,250,0.1); border-radius: 6px; padding: 12px 16px;">
+                    <div style="font-size: 11px; color: #7a8ba0; text-transform: uppercase; margin-bottom: 4px;">Primary Concern</div>
+                    <div style="font-size: 15px; font-weight: 600; color: #e8edf5;">{analysis.ai_main_pollutant or '—'}</div>
+                  </div>
+                </td>
+              </tr>
+            </table>
+
+            {trend_row}
+            {forecast_row}
+
+            <div style="margin-bottom: 20px;">
+              <div style="font-size: 11px; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Health Impact</div>
+              <p style="font-size: 13px; line-height: 1.6; color: #c5cfe0;">{analysis.ai_health_impact or '—'}</p>
+            </div>
+
+            <div>
+              <div style="font-size: 11px; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Recommendations</div>
+              <ul style="padding-left: 0; list-style: none;">
+                {recs_html}
+              </ul>
+            </div>
+          </div>
+        </div>
+        """
+
+    html = f"""<!DOCTYPE html><html><head><meta charset="UTF-8">
     <style>
-      body {{ font-family: Arial, sans-serif; margin: 0; padding: 0; background: #080d1a; color: #e8edf5; }}
-      .cover {{ padding: 60px 48px; background: #0e1525; min-height: 200px; border-bottom: 3px solid {color}; }}
-      .cover h1 {{ font-size: 28px; margin-bottom: 8px; color: {color}; }}
-      .cover .sub {{ color: #7a8ba0; font-size: 14px; margin-bottom: 32px; }}
-      .score-circle {{ display: inline-block; width: 80px; height: 80px; border-radius: 50%;
-        border: 4px solid {color}; text-align: center; line-height: 80px; font-size: 32px; font-weight: 700; color: {color}; }}
+      * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+      body {{ font-family: Arial, Helvetica, sans-serif; background: #080d1a; color: #e8edf5; }}
+      .cover {{ padding: 56px 48px 40px; background: #0e1525; border-bottom: 3px solid {color}; }}
+      .score-circle {{ display: inline-flex; align-items: center; justify-content: center; width: 88px; height: 88px; border-radius: 50%; border: 4px solid {color}; font-size: 34px; font-weight: 700; color: {color}; margin-bottom: 20px; }}
+      .cover h1 {{ font-size: 26px; color: {color}; margin-bottom: 8px; }}
+      .cover .meta {{ color: #7a8ba0; font-size: 13px; }}
       .section {{ padding: 32px 48px; }}
-      .section h2 {{ font-size: 16px; text-transform: uppercase; letter-spacing: 1px; color: {color}; margin-bottom: 20px; }}
+      .section h2 {{ font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: {color}; margin-bottom: 16px; }}
       table {{ width: 100%; border-collapse: collapse; font-size: 13px; }}
-      th {{ text-align: left; padding: 10px 12px; background: #162036; color: #7a8ba0; font-weight: 600; }}
-      td {{ padding: 11px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }}
-      .good {{ color: #00c9a7; }} .moderate {{ color: #f5a623; }} .poor {{ color: #f05252; }}
-      .footer {{ padding: 24px 48px; color: #7a8ba0; font-size: 12px; border-top: 1px solid rgba(255,255,255,0.07); }}
+      th {{ text-align: left; padding: 9px 12px; background: #162036; color: #7a8ba0; font-size: 11px; text-transform: uppercase; }}
+      td {{ padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #e8edf5; }}
+      .footer {{ padding: 20px 48px; color: #7a8ba0; font-size: 11px; border-top: 1px solid rgba(255,255,255,0.07); }}
     </style></head><body>
+
     <div class="cover">
       <div class="score-circle">{analysis.overall_score}</div>
       <h1>{title}</h1>
-      <div class="sub">Territory: {t.name if t else ''} &nbsp;|&nbsp; Period: {analysis.date_from} → {analysis.date_to} &nbsp;|&nbsp; Status: {analysis.label}</div>
+      <div class="meta">
+        Territory: {t.name if t else '—'} &nbsp;·&nbsp;
+        Period: {analysis.date_from} → {analysis.date_to} &nbsp;·&nbsp;
+        Status: <strong style="color:{color}">{analysis.label}</strong>
+      </div>
     </div>
+
     <div class="section">
-      <h2>Air Quality Metrics</h2>
+      <h2>Air Quality Metrics vs WHO Guidelines</h2>
       <table>
         <tr><th>Pollutant</th><th>Measured (μg/m³)</th><th>WHO Limit</th><th>Status</th></tr>
-        <tr><td>PM2.5</td><td>{analysis.pm25}</td><td>5</td><td class="{'good' if analysis.pm25 <= 5 else 'moderate' if analysis.pm25 <= 15 else 'poor'}">{'✓ Good' if analysis.pm25 <= 5 else '⚠ Moderate' if analysis.pm25 <= 15 else '✗ Poor'}</td></tr>
-        <tr><td>PM10</td><td>{analysis.pm10}</td><td>15</td><td class="{'good' if analysis.pm10 <= 15 else 'moderate' if analysis.pm10 <= 45 else 'poor'}">{'✓ Good' if analysis.pm10 <= 15 else '⚠ Moderate' if analysis.pm10 <= 45 else '✗ Poor'}</td></tr>
-        <tr><td>NO₂</td><td>{analysis.no2}</td><td>10</td><td class="{'good' if analysis.no2 <= 10 else 'moderate' if analysis.no2 <= 25 else 'poor'}">{'✓ Good' if analysis.no2 <= 10 else '⚠ Moderate' if analysis.no2 <= 25 else '✗ Poor'}</td></tr>
-        <tr><td>SO₂</td><td>{analysis.so2}</td><td>40</td><td class="{'good' if analysis.so2 <= 40 else 'moderate' if analysis.so2 <= 125 else 'poor'}">{'✓ Good' if analysis.so2 <= 40 else '⚠ Moderate' if analysis.so2 <= 125 else '✗ Poor'}</td></tr>
-        <tr><td>CO</td><td>{analysis.co}</td><td>100</td><td class="{'good' if analysis.co <= 100 else 'moderate' if analysis.co <= 1000 else 'poor'}">{'✓ Good' if analysis.co <= 100 else '⚠ Moderate' if analysis.co <= 1000 else '✗ Poor'}</td></tr>
-        <tr><td>O₃</td><td>{analysis.o3}</td><td>60</td><td class="{'good' if analysis.o3 <= 60 else 'moderate' if analysis.o3 <= 100 else 'poor'}">{'✓ Good' if analysis.o3 <= 60 else '⚠ Moderate' if analysis.o3 <= 100 else '✗ Poor'}</td></tr>
+        {rows}
       </table>
     </div>
-    <div class="footer">Data source: Open-Meteo Air Quality API (Copernicus Atmosphere Monitoring Service) &nbsp;|&nbsp; Sputnik Eco Platform &nbsp;|&nbsp; Generated {analysis.created_at.strftime('%Y-%m-%d')}</div>
-    </body></html>
-    """
+
+    {ai_section}
+
+    <div class="footer">
+      Data: Open-Meteo Air Quality API (Copernicus CAMS) &nbsp;·&nbsp;
+      AI: Claude (Anthropic) &nbsp;·&nbsp;
+      Sputnik Eco Platform &nbsp;·&nbsp;
+      Generated {analysis.created_at.strftime('%Y-%m-%d')}
+    </div>
+    </body></html>"""
 
     path = f"{REPORTS_DIR}/report_{analysis.id}.pdf"
     HTML(string=html).write_pdf(path)

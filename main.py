@@ -5,6 +5,9 @@ from database import create_tables
 from routers import auth_router, territories, analysis, reports
 import os
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI(title="Sputnik Eco")
 
