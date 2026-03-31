@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Territories - Sputnik Eco</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .page-header {
+            margin-left: 240px;
+        }
+
+        .main {
+            margin-left: 240px;
+            padding: 40px;
+        }
+
+        .compare-selector {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 32px;
+            background: var(--surface);
+            padding: 24px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+
+        .compare-selector select {
+            flex: 1;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .vs-badge {
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr;
+            gap: 24px;
+            align-items: stretch;
+            margin-top: 24px;
+        }
+
+        .compare-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            text-align: center;
+        }
+
+        .compare-card .score {
+            font-size: 48px;
+            font-weight: 700;
+            margin: 16px 0;
+        }
+
+        .compare-card .metric-list {
+            text-align: left;
+            margin-top: 24px;
+        }
+
+        .metric-list .m-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .chart-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .winner-badge {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main">
+        <div class="page-header" style="margin-left: 0;">
+            <div>
+                <h1>Compare Territories</h1>
+                <p style="color: var(--muted);">Side-by-side environmental analysis & radar chart</p>
+            </div>
+        </div>
+
+        <div class="compare-selector">
+            <select id="selA">
+                <option value="">-- Select Territory A --</option>
+            </select>
+            <div class="vs-badge">VS</div>
+            <select id="selB">
+                <option value="">-- Select Territory B --</option>
+            </select>
+            <button class="btn btn-primary" id="btnRunCompare" style="padding: 12px 32px;">Run Comparison</button>
+        </div>
+
+        <div id="resultsCmp" style="display: none;">
+            <div class="compare-grid">
+                <!-- Territory A Card -->
+                <div class="compare-card" id="cardA">
+                    <div id="winnerA" class="winner-badge" style="display:none">Cleanest Air</div>
+                    <h3 id="nameA" style="font-size: 20px; color: var(--text);">Territory A</h3>
+                    <div class="score" id="scoreA">--</div>
+                    <div id="labelA" style="font-weight: 600; text-transform:uppercase;"></div>
+
+                    <div class="metric-list">
+                        <div class="m-item"><span>PM2.5</span><strong id="m_pm25_A"></strong></div>
+                        <div class="m-item"><span>PM10</span><strong id="m_pm10_A"></strong></div>
+                        <div class="m-item"><span>NO₂</span><strong id="m_no2_A"></strong></div>
+                        <div class="m-item"><span>SO₂</span><strong id="m_so2_A"></strong></div>
+                        <div class="m-item"><span>CO</span><strong id="m_co_A"></strong></div>
+                        <div class="m-item" style="border:none"><span>O₃</span><strong id="m_o3_A"></strong></div>
+                    </div>
+                </div>
+
+                <!-- Radar Chart -->
+                <div class="chart-container">
+                    <canvas id="radarChart"></canvas>
+                </div>
+
+                <!-- Territory B Card -->
+                <div class="compare-card" id="cardB">
+                    <div id="winnerB" class="winner-badge" style="display:none">Cleanest Air</div>
+                    <h3 id="nameB" style="font-size: 20px; color: var(--text);">Territory B</h3>
+                    <div class="score" id="scoreB">--</div>
+                    <div id="labelB" style="font-weight: 600; text-transform:uppercase;"></div>
+
+                    <div class="metric-list">
+                        <div class="m-item"><span>PM2.5</span><strong id="m_pm25_B"></strong></div>
+                        <div class="m-item"><span>PM10</span><strong id="m_pm10_B"></strong></div>
+                        <div class="m-item"><span>NO₂</span><strong id="m_no2_B"></strong></div>
+                        <div class="m-item"><span>SO₂</span><strong id="m_so2_B"></strong></div>
+                        <div class="m-item"><span>CO</span><strong id="m_co_B"></strong></div>
+                        <div class="m-item" style="border:none"><span>O₃</span><strong id="m_o3_B"></strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="/app/js/api.js?v=3"></script>
+    <script src="/app/js/compare.js"></script>
+</body>
+
+</html>

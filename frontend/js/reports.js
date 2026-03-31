@@ -54,10 +54,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 <div style="margin-top: auto; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 16px;">
                     <span style="font-size: 12px; color: var(--muted);">Generated: ${r.created_at.split('T')[0]}</span>
-                    <button class="btn btn-ghost" style="padding: 6px 12px; font-size: 12px;" onclick="window.open('${r.pdf_url}', '_blank')">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        PDF
-                    </button>
+                    <div style="display:flex; gap: 8px;">
+                        <button class="btn btn-ghost" style="padding: 6px; font-size: 12px; color: var(--danger)" onclick="deleteReport(${r.id}, this)">
+                            🗑️
+                        </button>
+                        <button class="btn btn-ghost" style="padding: 6px 12px; font-size: 12px;" onclick="api.reports.download(${r.id})">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            PDF
+                        </button>
+                    </div>
                 </div>
             `;
             grid.appendChild(card);
@@ -67,3 +72,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         toast('Failed to load reports: ' + err.message, 'error');
     }
 });
+
+window.deleteReport = async function (id, btn) {
+    if (!confirm('Delete this report?')) return;
+    const orig = btn.innerHTML;
+    btn.innerHTML = '...';
+    try {
+        await api.reports.delete(id);
+        const card = btn.closest('.card');
+        if (card) card.remove();
+        toast('Report deleted', 'success');
+
+        const cardsLeft = document.querySelectorAll('.card').length;
+        document.getElementById('reportCount').textContent = `(${cardsLeft})`;
+        if (cardsLeft === 0) {
+            document.getElementById('emptyState').style.display = 'block';
+        }
+    } catch (err) {
+        toast(err.message, 'error');
+        btn.innerHTML = orig;
+    }
+}
+

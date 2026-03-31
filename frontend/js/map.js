@@ -1,39 +1,46 @@
-let map, drawnItems, currentDrawing = null;
+let map, drawnItems = [];
+let drawingPolygon = null;
 let customColor = '#00c9a7';
+let currentGeoJSON = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     requireAuth();
     renderSidebar();
 
-    initMap();
-    await loadTerritories();
+    ymaps.ready(initMap);
 
     document.getElementById('btnDrawNew').addEventListener('click', () => {
         if (!map) return;
-        new L.Draw.Polygon(map, { shapeOptions: { color: customColor } }).enable();
+        startDrawing();
     });
 
     document.getElementById('btnCancelName').addEventListener('click', () => {
         document.getElementById('nameModal').style.display = 'none';
-        if (currentDrawing) drawnItems.removeLayer(currentDrawing);
+        if (drawingPolygon) {
+            map.geoObjects.remove(drawingPolygon);
+            drawingPolygon = null;
+        }
     });
 
     document.getElementById('btnSaveName').addEventListener('click', async () => {
         const name = document.getElementById('newTerritoryName').value;
         if (!name) return toast('Please enter a name', 'error');
 
-        const geojson = currentDrawing.toGeoJSON();
         try {
             document.getElementById('btnSaveName').disabled = true;
-            await api.territories.create({
+            const t = await api.territories.create({
                 name,
-                geojson: JSON.stringify(geojson),
+                geojson: JSON.stringify(currentGeoJSON),
                 color: customColor
             });
             document.getElementById('nameModal').style.display = 'none';
             document.getElementById('btnSaveName').disabled = false;
             toast('Territory created', 'success');
+
+            if (drawingPolygon) { drawingPolygon.options.set('editorDrawingCursor', 'pointer'); }
+
             await loadTerritories();
+            selectTerritory(t, customColor);
         } catch (err) {
             toast(err.message, 'error');
             document.getElementById('btnSaveName').disabled = false;
@@ -59,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>`;
 
         try {
-            btn.textContent = '🤖 Running AI analysis...';
+            btn.textContent = '🤖 Running analysis...';
             btn.disabled = true;
 
             const res = await api.analysis.run({
@@ -73,6 +80,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         } catch (err) {
             toast(err.message, 'error');
+            document.getElementById('ai-analysis-container').innerHTML = '';
         } finally {
             btn.textContent = origText;
             btn.disabled = false;
@@ -107,22 +115,64 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 });
 
-function initMap() {
-    map = L.map('map').setView([20, 0], 3);
+async function initMap() {
+    map = new ymaps.Map("map", {
+        center: [55.76, 37.64],
+        zoom: 10,
+        controls: ['zoomControl', 'searchControl', 'fullscreenControl']
+    });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
-    }).addTo(map);
+    // Dark style filter is handled via CSS
+    await loadTerritories();
+}
 
-    drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
+function startDrawing() {
+    if (drawingPolygon) {
+        map.geoObjects.remove(drawingPolygon);
+    }
+    drawingPolygon = new ymaps.Polygon([], {}, {
+        editorDrawingCursor: "crosshair",
+        editorMaxPoints: 50,
+        fillColor: 'rgba(0, 201, 167, 0.2)',
+        strokeColor: '#00c9a7',
+        strokeWidth: 2
+    });
 
-    map.on(L.Draw.Event.CREATED, function (e) {
-        currentDrawing = e.layer;
-        drawnItems.addLayer(currentDrawing);
+    map.geoObjects.add(drawingPolygon);
+    drawingPolygon.editor.startDrawing();
+
+    toast('Draw a polygon. Click the first point again to finish.', 'info');
+
+    // Monitor when drawing finishes
+    var stateMonitor = new ymaps.Monitor(drawingPolygon.editor.state);
+    stateMonitor.add("drawing", function (newValue) {
+        if (!newValue) {
+            // drawing just stopped (completed)
+            onDrawComplete();
+        }
+    });
+}
+
+function onDrawComplete() {
+    const coords = drawingPolygon.geometry.getCoordinates();
+    if (coords && coords[0] && coords[0].length >= 3) {
+        // Convert to GeoJSON manually
+        // Yandex uses [lat, lng], whereas GeoJSON normally uses [lng, lat]
+        const geoJSONCoords = coords[0].map(c => [c[1], c[0]]);
+
+        currentGeoJSON = {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [geoJSONCoords]
+            }
+        };
         document.getElementById('newTerritoryName').value = '';
         document.getElementById('nameModal').style.display = 'flex';
-    });
+    } else {
+        toast('Invalid polygon drawn', 'error');
+        map.geoObjects.remove(drawingPolygon);
+    }
 }
 
 function getScoreColor(score) {
@@ -134,22 +184,25 @@ function getScoreColor(score) {
 
 function getRiskBadge(risk) {
     if (!risk) return '';
-    const colors = {
-        'low': 'color:#00c9a7',
-        'medium': 'color:#f5a623',
-        'high': 'color:#f05252'
-    };
+    const colors = { 'low': 'color:#00c9a7', 'medium': 'color:#f5a623', 'high': 'color:#f05252' };
     return `<span style="font-size:10px;text-transform:uppercase;${colors[risk]}">${risk} Risk</span>`;
 }
 
 async function loadTerritories() {
+    if (!map) return;
     try {
         const list = await api.territories.list();
         const container = document.getElementById('territoryList');
         const empty = document.getElementById('territoryEmpty');
 
-        container.innerHTML = '';
-        drawnItems.clearLayers();
+        Array.from(container.children).forEach(c => {
+            if (c.id !== 'territoryEmpty') c.remove();
+        });
+
+        if (drawnItems && drawnItems.length > 0) {
+            drawnItems.forEach(i => map.geoObjects.remove(i));
+        }
+        drawnItems = [];
 
         if (list.length === 0) {
             empty.style.display = 'block';
@@ -166,35 +219,65 @@ async function loadTerritories() {
             if (t.geojson) {
                 try {
                     const geo = JSON.parse(t.geojson);
-                    const layer = L.geoJSON(geo, { style: { color, weight: 2, fillOpacity: 0.2 } });
+                    // Convert [lng, lat] back to [lat, lng] for Yandex
+                    const yandexCoords = geo.geometry.coordinates[0].map(c => [c[1], c[0]]);
 
-                    const scoreText = t.last_score ? `Score: ${t.last_score}` : 'No data';
-                    layer.bindPopup(`<strong>${t.name}</strong><br>${scoreText}`);
+                    const p = new ymaps.Polygon([yandexCoords], {
+                        hintContent: t.name,
+                        balloonContent: `<strong>${t.name}</strong><br>Score: ${t.last_score || 'No data'}`
+                    }, {
+                        fillColor: color,
+                        fillOpacity: 0.2,
+                        strokeColor: color,
+                        strokeWidth: 2
+                    });
 
-                    layer.on('click', () => selectTerritory(t, color));
-                    drawnItems.addLayer(layer);
+                    p.events.add('click', function () {
+                        selectTerritory(t, color);
+                    });
+
+                    map.geoObjects.add(p);
+                    drawnItems.push(p);
                 } catch (e) { }
             }
 
             // ui item
             const item = document.createElement('div');
             item.className = 'territory-item';
-            item.onclick = () => {
+            item.addEventListener('click', (e) => {
+                if (e.target.closest('.del-btn')) return;
                 selectTerritory(t, color);
-                map.setView([t.centroid_lat, t.centroid_lon], 12);
-            };
+                map.setCenter([t.centroid_lat, t.centroid_lon], 12);
+            });
             item.innerHTML = `
-                <div class="dot" style="background: ${color}"></div>
+                <div class="dot" style="background: ${color}; flex-shrink: 0;"></div>
                 <div class="name" title="${t.name}">${t.name}</div>
-                <div class="score">
-                    <div>${t.last_score || '--'}</div>
-                    ${getRiskBadge(t.last_risk)}
+                <div class="score" style="display:flex; align-items:center; gap:8px;">
+                    <div>
+                        <div>${t.last_score || '--'}</div>
+                        ${getRiskBadge(t.last_risk)}
+                    </div>
+                    <button class="del-btn btn-ghost" style="padding:4px; font-size:12px; color:var(--danger); border:none; cursor:pointer;" onclick="deleteTerritory(${t.id})">🗑️</button>
                 </div>
             `;
             container.appendChild(item);
         });
     } catch (err) {
         toast('Failed to load territories: ' + err.message, 'error');
+    }
+}
+
+window.deleteTerritory = async function (id) {
+    if (!confirm('Delete this territory? All associated analyses will be lost.')) return;
+    try {
+        await api.territories.delete(id);
+        toast('Territory deleted', 'success');
+        if (document.getElementById('selectTerritoryId').value == id) {
+            document.getElementById('analysisFormPanel').style.display = 'none';
+        }
+        await loadTerritories();
+    } catch (err) {
+        toast(err.message, 'error');
     }
 }
 
@@ -205,10 +288,10 @@ function selectTerritory(t, color) {
     document.getElementById('selectTerritoryName').textContent = t.name;
     document.getElementById('selectTerritoryId').value = t.id;
 
-    // set default dates (last 7 days)
+    // set default dates (last 7 days by default, which is perfect for satellite)
     const today = new Date();
     const lastWeek = new Date(today);
-    lastWeek.setDate(lastWeek.getDate() - 7);
+    lastWeek.setDate(lastWeek.getDate() - 3); // 3 days ago is safest for open-meteo recent data limit
 
     document.getElementById('dateTo').value = today.toISOString().split('T')[0];
     document.getElementById('dateFrom').value = lastWeek.toISOString().split('T')[0];
@@ -239,10 +322,7 @@ function showResults(res) {
     setPollutant('CO', res.co, 10000);
     setPollutant('O3', res.o3, 240);
 
-    // AI Block
     renderAIBlock(document.getElementById('ai-analysis-container'), res);
-
-    // Refresh map to update color
     loadTerritories();
 }
 

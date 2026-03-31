@@ -6,8 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Map & Analysis - Sputnik Eco</title>
     <link rel="stylesheet" href="/static/css/main.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <!-- Яндекс Карты API -->
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=b259740a-ffbd-477d-b570-fc2b6bb7bc7f"
+        type="text/javascript"></script>
     <style>
         body {
             overflow: hidden;
@@ -34,6 +35,8 @@
             height: 100%;
             background: #080d1a;
             z-index: 1;
+            width: 100%;
+            position: relative;
         }
 
         .panel-section {
@@ -101,7 +104,7 @@
         }
 
         .modal-overlay {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             right: 0;
@@ -148,6 +151,11 @@
                 opacity: 0.6;
             }
         }
+
+        /* Yandex maps dark theme fixes */
+        .ymaps-2-1-79-ground-pane {
+            filter: invert(90%) hue-rotate(180deg) brightness(85%) contrast(110%);
+        }
     </style>
 </head>
 
@@ -192,7 +200,6 @@
                 <div class="panel-title">Results</div>
 
                 <div id="results-panel" style="display:none">
-                    <!-- Score -->
                     <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
                         <div id="resScoreCircle" class="score-badge score-good">--</div>
                         <div>
@@ -201,7 +208,6 @@
                         </div>
                     </div>
 
-                    <!-- 6 pollutant rows -->
                     <div id="pollutants-list" style="margin-bottom: 24px;">
                         <div class="pollutant-row">
                             <span style="width: 50px;">PM2.5</span>
@@ -253,15 +259,7 @@
                         </div>
                     </div>
 
-                    <!-- AI Analysis block — populated by renderAIBlock() -->
-                    <div id="ai-analysis-container" style="margin-top:8px">
-                        <!-- skeleton while loading -->
-                        <div id="ai-skeleton">
-                            <div class="skeleton" style="height:16px;width:60%;margin-bottom:10px"></div>
-                            <div class="skeleton" style="height:60px;margin-bottom:10px"></div>
-                            <div class="skeleton" style="height:40px;width:80%"></div>
-                        </div>
-                    </div>
+                    <div id="ai-analysis-container" style="margin-top:8px"></div>
 
                     <button class="btn btn-ghost" style="width:100%;margin-top:20px" id="btnSaveReport">
                         Save as PDF Report
@@ -270,25 +268,25 @@
             </div>
         </div>
 
-        <div id="map"></div>
-    </div>
-
-    <div class="modal-overlay" id="nameModal">
-        <div class="modal">
-            <h3 style="margin-bottom: 16px;">Name this territory</h3>
-            <div class="form-group">
-                <input type="text" id="newTerritoryName" placeholder="e.g. Factory Site A" required>
-            </div>
-            <div class="grid grid-2">
-                <button class="btn btn-ghost" id="btnCancelName">Cancel</button>
-                <button class="btn btn-primary" id="btnSaveName">Save</button>
+        <div id="map">
+            <!-- Modal overlays inside map so it covers the whole screen -->
+            <div class="modal-overlay" id="nameModal">
+                <div class="modal">
+                    <h3 style="margin-bottom: 16px;">Name this territory</h3>
+                    <div class="form-group">
+                        <input type="text" id="newTerritoryName" placeholder="e.g. Factory Site A" required>
+                    </div>
+                    <div class="grid grid-2">
+                        <button class="btn btn-ghost" id="btnCancelName">Cancel</button>
+                        <button class="btn btn-primary" id="btnSaveName">Save</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-    <script src="/app/js/api.js"></script>
-    <script src="/app/js/map.js"></script>
+
+    <script src="/app/js/api.js?v=4"></script>
+    <script src="/app/js/map.js?v=4"></script>
 </body>
 
 </html>
