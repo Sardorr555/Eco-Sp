@@ -317,7 +317,30 @@ const UZ_CYR = {
   "No territories analyzed yet. Head over to Map & Analysis to get started.": "Ҳали ҳеч қандай ҳудуд таҳлил қилинмаган. Бошлаш учун 'Харита ва Таҳлил'га ўтинг.",
   "Your Territories": "Сизнинг ҳудудларингиз",
   "Generated:": "Яратилган:",
-  "PDF": "PDF"
+  "PDF": "PDF",
+
+  // Dynamic Metrics & Labels
+  "Excellent": "Аъло",
+  "Good": "Яхши",
+  "Moderate": "Ўртача",
+  "Poor": "Ёмон",
+  "Very Poor": "Жуда ёмон",
+  "Hazardous": "Хавфли",
+  "LOW": "ПАСТ",
+  "MEDIUM": "ЎРТА",
+  "HIGH": "ЮҚОРИ",
+  "low": "паст",
+  "medium": "ўрта",
+  "high": "юқори",
+  "Improving": "Яхшиланмоқда",
+  "Stable": "Барқарор",
+  "Worsening": "Ёмонлашмоқда",
+  "Baseline": "Асосий",
+
+  "↗ Improving": "↗ Яхшиланмоқда",
+  "→ Stable": "→ Барқарор",
+  "↘ Worsening": "↘ Ёмонлашмоқда",
+  "◎ Baseline": "◎ Асосий"
 };
 
 window.applyLanguage = function () {
