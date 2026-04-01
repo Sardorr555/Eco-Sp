@@ -78,15 +78,21 @@ async def run_ai_analysis_safe(territory_name: str, date_from: str, date_to: str
     Historical Context (for trend and forecast):
     {history_context}
     
+    IMPORTANT TRANSLATION RULE:
+    You MUST output all descriptive text (summary, health_impact, recommendations, trend_assessment, forecast, main_pollutant) in UZBEK language using CYRILLIC alphabet (Ўзбек тили, Кирилл алифбоси).
+    However, the following strict enum values MUST remain in English to not break the system:
+    - risk_level: MUST be strictly one of 'low', 'medium', 'high'.
+    - trend_direction: MUST be strictly one of 'improving', 'stable', 'worsening', or 'baseline'.
+
     Return a strictly valid JSON object covering the following keys:
-    - summary (string): A brief summary of the air quality (2-3 sentences).
-    - risk_level (string): One of 'low', 'medium', 'high'.
-    - main_pollutant (string): Name of the main pollutant of concern (e.g. 'pm25').
-    - health_impact (string): The health impact.
-    - recommendations (list of strings): 3 to 4 recommendations.
-    - trend_assessment (string): Assess the trend vs previous periods, if available.
-    - trend_direction (string): One of 'improving', 'stable', 'worsening', or 'baseline'.
-    - forecast (string): 30-day forecast description based on the situation.
+    - summary (string): A brief summary of the air quality (2-3 sentences) in Uzbek Cyrillic.
+    - risk_level (string): One of 'low', 'medium', 'high' (in English).
+    - main_pollutant (string): Name of the main pollutant of concern in Uzbek Cyrillic (e.g. Чаң PM2.5).
+    - health_impact (string): The health impact in Uzbek Cyrillic.
+    - recommendations (list of strings): 3 to 4 recommendations in Uzbek Cyrillic.
+    - trend_assessment (string): Assess the trend vs previous periods in Uzbek Cyrillic.
+    - trend_direction (string): One of 'improving', 'stable', 'worsening', or 'baseline' (in English).
+    - forecast (string): 30-day forecast description based on the situation in Uzbek Cyrillic.
     """
 
     try:

@@ -275,7 +275,23 @@ const UZ_CYR = {
   "No reports generated yet.": "Ҳозирча ҳисобот яратилмаган.",
   "Generate one from the Map Analysis page.": "Харита саҳифасида таҳлил орқали яратинг.",
   "-- Select Territory A --": "-- А ҳудудни танланг --",
-  "-- Select Territory B --": "-- Б ҳудудни танланг --"
+  "-- Select Territory B --": "-- Б ҳудудни танланг --",
+  "✦ AI Environmental Analysis": "✦ Атроф-мухит сунъий интеллект таҳлили",
+  "Risk Level": "Хавф даражаси",
+  "Trend": "Тенденция",
+  "Primary Concern": "Асосий муаммо",
+  "Trend vs Previous Periods": "Олдинги даврлар билан тенденция",
+  "30-Day Forecast": "30 кунлик прогноз",
+  "Health Impact": "Соғлиққа таъсири",
+  "Recommendations": "Тавсиялар",
+
+  // Tooltips
+  "PM2.5: Fine particulate matter (< 2.5 µm). Sources: exhausts, smoke. Impact: Severe lung and heart diseases.": "PM2.5: Майда чаң заррачалари (< 2.5 µm). Манба: тутун, чиқинди газлар. Таъсири: Ўпка ва юрак касалликлари.",
+  "PM10: Coarse particulate matter (< 10 µm). Sources: dust, pollen. Impact: Irritates upper respiratory tract.": "PM10: Йирик чаң заррачалари (< 10 µm). Манба: чанг, гул чанги. Таъсири: Юқори нафас йўлларини қўзғатади.",
+  "NO2: Nitrogen Dioxide. Sources: car engines, factories. Impact: Airway inflammation, cough, asthma.": "NO2: Азот диоксиди. Манба: машина двигателлари, заводлар. Таъсири: Нафас йўллари яллиғланиши, астма.",
+  "SO2: Sulfur Dioxide. Sources: coal/oil burning. Impact: Eye irritation, worsens asthma.": "SO2: Олтингугурт диоксиди. Манба: кўмир ва нефт ёқиш. Таъсири: Кўз қичишиши, астмани кучайтиради.",
+  "CO: Carbon Monoxide. Sources: incomplete burning of fuels. Impact: Reduces oxygen delivery to organs, fatigue.": "CO: Углерод оксиди. Манба: ёқилғи чала ёниши. Таъсири: Органларга кислород боришини камайтиради.",
+  "O3: Ground-level Ozone. Sources: smog, chemical reactions in sunlight. Impact: Breathing problems, reduced lung function.": "O3: Ер усти озони. Манба: тутун ва қуёш нуридаги химиявий реакциялар. Таъсири: Нафас олиш муаммолари."
 };
 
 window.applyLanguage = function () {
@@ -296,6 +312,12 @@ window.applyLanguage = function () {
   document.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(el => {
     const ph = el.getAttribute('placeholder');
     if (ph && UZ_CYR[ph]) el.setAttribute('placeholder', UZ_CYR[ph]);
+  });
+
+  // Check elements with title attributes (Tooltips)
+  document.querySelectorAll('[title]').forEach(el => {
+    const title = el.getAttribute('title');
+    if (title && UZ_CYR[title]) el.setAttribute('title', UZ_CYR[title]);
   });
 };
 
