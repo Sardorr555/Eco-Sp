@@ -291,11 +291,37 @@ const UZ_CYR = {
   "NO2: Nitrogen Dioxide. Sources: car engines, factories. Impact: Airway inflammation, cough, asthma.": "NO2: Азот диоксиди. Манба: машина двигателлари, заводлар. Таъсири: Нафас йўллари яллиғланиши, астма.",
   "SO2: Sulfur Dioxide. Sources: coal/oil burning. Impact: Eye irritation, worsens asthma.": "SO2: Олтингугурт диоксиди. Манба: кўмир ва нефт ёқиш. Таъсири: Кўз қичишиши, астмани кучайтиради.",
   "CO: Carbon Monoxide. Sources: incomplete burning of fuels. Impact: Reduces oxygen delivery to organs, fatigue.": "CO: Углерод оксиди. Манба: ёқилғи чала ёниши. Таъсири: Органларга кислород боришини камайтиради.",
-  "O3: Ground-level Ozone. Sources: smog, chemical reactions in sunlight. Impact: Breathing problems, reduced lung function.": "O3: Ер усти озони. Манба: тутун ва қуёш нуридаги химиявий реакциялар. Таъсири: Нафас олиш муаммолари."
+  "O3: Ground-level Ozone. Sources: smog, chemical reactions in sunlight. Impact: Breathing problems, reduced lung function.": "O3: Ер усти озони. Манба: тутун ва қуёш нуридаги химиявий реакциялар. Таъсири: Нафас олиш муаммолари.",
+
+  // Modals & Action Buttons
+  "+ New": "+ Янги",
+  "Name this territory": "Ушбу ҳудудни номланг",
+  "e.g. Factory Site A": "мас. А Заводи ҳудуди",
+  "Cancel": "Бекор қилиш",
+  "Save": "Сақлаш",
+  "Saving...": "Сақланмоқда...",
+  "Loading...": "Юкланмоқда...",
+  "Error": "Хатолик",
+
+  // Auth Pages
+  "Email": "Электрон почта",
+  "Password": "Парол",
+  "Login": "Тизимга кириш",
+  "Don't have an account?": "Ҳисобингиз йўқми?",
+  "Register": "Рўйхатдан ўтиш",
+  "Create Account": "Ҳисоб яратиш",
+  "Confirm Password": "Паролни тасдиқланг",
+  "Already have an account?": "Аллақачон ҳисобингиз борми?",
+
+  // Dashboard & Misc
+  "No territories analyzed yet. Head over to Map & Analysis to get started.": "Ҳали ҳеч қандай ҳудуд таҳлил қилинмаган. Бошлаш учун 'Харита ва Таҳлил'га ўтинг.",
+  "Your Territories": "Сизнинг ҳудудларингиз",
+  "Generated:": "Яратилган:",
+  "PDF": "PDF"
 };
 
 window.applyLanguage = function () {
-  const lang = localStorage.getItem('lang') || 'en';
+  const lang = localStorage.getItem('lang') || 'uz';
   if (lang !== 'uz') return;
 
   const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);

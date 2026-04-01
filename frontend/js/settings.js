@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('set-company').value = user.company || '';
 
         // Load Language
-        document.getElementById('set-lang').value = localStorage.getItem('lang') || 'en';
+        document.getElementById('set-lang').value = localStorage.getItem('lang') || 'uz';
 
         const plan = (user.plan || 'free').toUpperCase();
         document.getElementById('planBadge').textContent = `${plan} PLAN`;
