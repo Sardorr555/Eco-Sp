@@ -159,4 +159,5 @@ function renderComparison(a, b) {
         }
     });
 
+    setTimeout(applyLanguage, 100);
 }

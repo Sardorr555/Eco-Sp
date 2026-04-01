@@ -324,6 +324,7 @@ function showResults(res) {
 
     renderAIBlock(document.getElementById('ai-analysis-container'), res);
     loadTerritories();
+    setTimeout(applyLanguage, 100);
 }
 
 function setPollutant(id, val, max) {
