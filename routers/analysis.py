@@ -60,7 +60,7 @@ async def run_analysis(
     if not territory:
         raise HTTPException(404, "Territory not found")
 
-    # 1. Fetch real satellite data
+    # 1. Fetch air quality data (WAQI sensors + Open-Meteo fallback)
     import httpx
     try:
         metrics = await fetch_air_quality(
@@ -72,6 +72,10 @@ async def run_analysis(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Data Fetch Error: {str(e)}")
 
+    # Extract source metadata (not stored in DB)
+    data_source = metrics.pop("_source", "open-meteo")
+    data_station = metrics.pop("_station", "Unknown")
+
     # 2. Calculate score
     score = calc_score(metrics)
     label = get_label(score)
@@ -81,11 +85,12 @@ async def run_analysis(
         Analysis.territory_id == territory.id
     ).order_by(Analysis.id.desc()).limit(3).all()
 
-    # 4. Run AI analysis via Claude (with historical context)
+    # 4. Run AI analysis (with historical context + data source info)
     ai = await run_ai_analysis_safe(
         territory.name, body.date_from, body.date_to,
         metrics, score, label,
-        previous_analyses=previous_analyses
+        previous_analyses=previous_analyses,
+        data_source=data_source, data_station=data_station
     )
 
     # 5. Save everything to DB

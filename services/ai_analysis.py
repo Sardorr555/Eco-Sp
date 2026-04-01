@@ -43,7 +43,7 @@ async def call_ai(system_prompt: str, user_prompt: str) -> str:
     # If no keys at all
     raise Exception(f"No valid API keys configured. Set DEEPSEEK_API_KEY or OPENAI_API_KEY. DeepSeek error (if attempted): {ds_err}")
 
-async def run_ai_analysis_safe(territory_name: str, date_from: str, date_to: str, metrics: dict, score: int, label: str, previous_analyses: list = None) -> dict:
+async def run_ai_analysis_safe(territory_name: str, date_from: str, date_to: str, metrics: dict, score: int, label: str, previous_analyses: list = None, data_source: str = "open-meteo", data_station: str = "Satellite") -> dict:
     """Run AI analysis safely, returning default empty values on failure."""
     default_res = {
         "ai_summary": "",
@@ -68,9 +68,13 @@ async def run_ai_analysis_safe(territory_name: str, date_from: str, date_to: str
 
     system_prompt = "You are an expert environmental and air quality analyst. Provide objective, concise, and structured JSON output. Do NOT include markdown blocks around the JSON; the output MUST be valid raw JSON."
     
+    # Data source info for AI context
+    source_info = f"Data source: {data_source} (Station: {data_station})"
+
     user_prompt = f"""
     Analyze the air quality for the territory '{territory_name}' from {date_from} to {date_to}.
     The overall calculated score is {score}/100 and the label is '{label}'.
+    {source_info}
     
     Here are the averaged measured pollutants in μg/m³:
     {metrics_str}
@@ -85,7 +89,7 @@ async def run_ai_analysis_safe(territory_name: str, date_from: str, date_to: str
     - trend_direction: MUST be strictly one of 'improving', 'stable', 'worsening', or 'baseline'.
 
     Return a strictly valid JSON object covering the following keys:
-    - summary (string): A brief summary of the air quality (2-3 sentences) in Uzbek Cyrillic.
+    - summary (string): A brief summary of the air quality (2-3 sentences) in Uzbek Cyrillic. Mention the data source ({data_source}) briefly.
     - risk_level (string): One of 'low', 'medium', 'high' (in English).
     - main_pollutant (string): Name of the main pollutant of concern in Uzbek Cyrillic (e.g. Чаң PM2.5).
     - health_impact (string): The health impact in Uzbek Cyrillic.
